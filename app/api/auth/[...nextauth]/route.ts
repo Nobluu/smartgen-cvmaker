@@ -2,6 +2,7 @@ import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 
 const handler = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || 'dummy',
@@ -27,7 +28,9 @@ const handler = NextAuth({
   },
   pages: {
     signIn: '/auth',
+    error: '/auth', // Redirect to auth page on error
   },
+  debug: process.env.NODE_ENV === 'development',
 })
 
 export { handler as GET, handler as POST }
