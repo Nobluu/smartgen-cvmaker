@@ -5,8 +5,8 @@ const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || 'dummy-client-id',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy-secret',
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
           prompt: "consent",
@@ -44,11 +44,7 @@ const handler = NextAuth({
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  pages: {
-    signIn: '/auth',
-    error: '/auth',
-  },
-  debug: false,
+  debug: process.env.NODE_ENV === 'development',
 })
 
 export { handler as GET, handler as POST }
