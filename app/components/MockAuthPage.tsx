@@ -33,22 +33,35 @@ export default function MockAuthPage({ onLogin }: MockAuthPageProps) {
   const handleGoogleLogin = async () => {
     setIsLoading(true)
     try {
-      // Try NextAuth Google sign in (will use dummy values if not configured)
+      // Check if Google OAuth is properly configured
+      if (!process.env.NEXT_PUBLIC_GOOGLE_CONFIGURED && 
+          (process.env.GOOGLE_CLIENT_ID === 'dummy-client-id' || 
+           !process.env.GOOGLE_CLIENT_ID)) {
+        // Demo mode - no real Google OAuth
+        toast.success('Login berhasil! (Demo Mode)')
+        setTimeout(() => onLogin(), 500)
+        return
+      }
+
+      // Try real Google OAuth
       const result = await signIn('google', { 
         callbackUrl: '/',
-        redirect: false 
+        redirect: true // Let NextAuth handle redirect
       })
       
-      if (result?.error) {
-        // If Google OAuth not configured, just proceed to demo
-        toast.success('Login dengan Google berhasil! (Demo Mode)')
-        setTimeout(() => onLogin(), 500)
-      } else {
+      // If redirect is false and we get here, check result
+      if (result && !result.error) {
         onLogin()
+      } else if (result?.error) {
+        console.error('Google OAuth error:', result.error)
+        // Fallback to demo
+        toast('Login dengan demo mode', { icon: 'ℹ️' })
+        setTimeout(() => onLogin(), 500)
       }
     } catch (error) {
-      // Fallback to demo mode if Google OAuth fails
-      toast.success('Login dengan Google berhasil! (Demo Mode)')
+      console.error('Login error:', error)
+      // Always allow demo mode as fallback
+      toast.success('Login berhasil! (Demo Mode)')
       setTimeout(() => onLogin(), 500)
     } finally {
       setIsLoading(false)

@@ -1,22 +1,39 @@
-import NextAuth from 'next-auth'
+import NextAuth, { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || 'dummy',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy',
+      clientId: process.env.GOOGLE_CLIENT_ID || 'dummy-client-id',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy-secret',
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
     }),
   ],
   callbacks: {
-    session: async ({ session, token }) => {
+    async signIn({ account, profile }) {
+      // Allow all sign ins for demo
+      return true
+    },
+    async redirect({ url, baseUrl }) {
+      // Always redirect to home page after sign in
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      else if (new URL(url).origin === baseUrl) return url
+      return baseUrl
+    },
+    async session({ session, token }) {
       if (session?.user) {
         session.user.id = token.sub!
       }
       return session
     },
-    jwt: async ({ user, token }) => {
+    async jwt({ user, token }) {
       if (user) {
         token.uid = user.id
       }
@@ -25,12 +42,16 @@ const handler = NextAuth({
   },
   session: {
     strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
     signIn: '/auth',
-    error: '/auth', // Redirect to auth page on error
+    error: '/auth',
   },
-  debug: process.env.NODE_ENV === 'development',
-})
+  debug: false,
+}
+
+const handler = NextAuth(authOptions)
+
 
 export { handler as GET, handler as POST }
