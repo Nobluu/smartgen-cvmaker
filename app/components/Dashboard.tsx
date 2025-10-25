@@ -20,11 +20,26 @@ import CVPreview from './CVPreview'
 
 type TabType = 'chat' | 'builder' | 'templates' | 'preview'
 
-export default function Dashboard() {
+interface DashboardProps {
+  onLogout?: () => void
+}
+
+export default function Dashboard({ onLogout }: DashboardProps) {
   const { data: session } = useSession()
   const [activeTab, setActiveTab] = useState<TabType>('chat')
   const [cvData, setCvData] = useState<any>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<string>('')
+
+  const handleLogout = async () => {
+    // Clear localStorage
+    if (onLogout) {
+      onLogout()
+    }
+    // Sign out from NextAuth if there's a session
+    if (session) {
+      await signOut({ redirect: false })
+    }
+  }
 
   const tabs = [
     { id: 'chat', label: 'AI Assistant', icon: MessageSquare },
@@ -69,12 +84,13 @@ export default function Dashboard() {
                   className="w-8 h-8 rounded-full"
                 />
                 <span className="text-sm font-medium text-gray-700">
-                  {session?.user?.name}
+                  {session?.user?.name || 'Demo User'}
                 </span>
               </div>
               <button
-                onClick={() => signOut()}
+                onClick={handleLogout}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                title="Logout"
               >
                 <LogOut className="w-5 h-5" />
               </button>
